@@ -6,6 +6,7 @@ var logger = require('morgan');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 const passport = require('passport');
+const config = require('./config');
 const authenticate = require('./authenticate');
 
 var indexRouter = require('./routes/index');
@@ -16,7 +17,7 @@ const partnerRouter = require('./routes/partnerRouter');
 
 const mongoose = require('mongoose');
 
-const url = 'mongodb://localhost:27017/nucampsite';
+const url = config.mongoUrl;
 const connect = mongoose.connect(url, {
   useCreateIndex: true,
   useFindAndModify: false,
