@@ -4,21 +4,24 @@ const User = require('../models/user');
 const passport = require('passport');
 // we'll import the authenticate module
 const authenticate = require('../authenticate');
+const cors = require('./cors');
 
 const router = express.Router();
 
 /* GET users listing. */
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function (
-  req,
-  res,
-  next
-) {
-  res.send('respond with a resource');
-});
+router.get(
+  '/',
+  cors.corsWithOptions,
+  authenticate.verifyUser,
+  authenticate.verifyAdmin,
+  function (req, res, next) {
+    res.send('respond with a resource');
+  }
+);
 
 // The passport-local-mongoose plugin provides us with methods that are useful for
 // registering and logging in users.
-router.post('/signup', (req, res) => {
+router.post('/signup', cors.corsWithOptions, (req, res) => {
   // This register method takes three arguments: The first will be a new User() that we
   // create with the name given to us from the client. The second will be the password
   // which we can plug directly from the incoming request from the client. The third will
@@ -78,29 +81,26 @@ router.post('/signup', (req, res) => {
 // argument and we'll pass in passport.authenticate() and pass in string of 'local'.
 // this will enable passport authentication on this route, and if there's no error
 // with this middleware, then it will just continue on to this next middleware
-router.post('/login', passport.authenticate('local'), (req, res) => {
-  // Once we authenticate with a username and passport, then we'll issue a token
-  // to the user using the get token method that we imported from the authenticate
-  // module and passing in an object that contains a payload. For the payload,
-  // we'll include the user id from the request object.
-  const token = authenticate.getToken({ _id: req.user._id });
-  // we will assume that there was no error, as any error will be handled by the
-  // passport middleware, so all we have to do here is set a response to the client
-  // for if the login was successful.
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/json');
-  // We'll include the token in the response object.
-  res.json({
-    success: true,
-    token: token,
-    status: 'You are successfully logged in!',
-  });
-});
+router.post(
+  '/login',
+  cors.corsWithOptions,
+  passport.authenticate('local'),
+  (req, res) => {
+    const token = authenticate.getToken({ _id: req.user._id });
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({
+      success: true,
+      token: token,
+      status: 'You are successfully logged in!',
+    });
+  }
+);
 
 // We will add the endpoint for logging out the user. For this we'll use a get, because
 // the client is not submitting any information to the server. We are simply logging out.
 // We'll set up the path and the middleware function as arguments.
-router.get('/logout', (req, res, next) => {
+router.get('/logout', cors.corsWithOptions, (req, res, next) => {
   // First thing we do is check if a session exists.
   if (req.session) {
     // if it does, we have to destroy the session using req.session.destroy(). This will
