@@ -14,6 +14,7 @@ const ExtractJwt = require('passport-jwt').ExtractJwt;
 // verified tokens.
 const jwt = require('jsonwebtoken'); // used to create, sign, and verify tokens
 // we'll import the config file that we just created via config.js
+const FacebookTokenStrategy = require('passport-facebook-token');
 const config = require('./config.js');
 
 // We'll export a property named local from this module and for it's value, we'll use
@@ -111,6 +112,37 @@ exports.jwtPassport = passport.use(
       }
     });
   })
+);
+
+exports.facebookPassport = passport.use(
+  new FacebookTokenStrategy(
+    {
+      clientID: config.facebook.clientId,
+      clientSecret: config.facebook.clientSecret,
+    },
+    (accessToken, refreshToken, profile, done) => {
+      User.findOne({ facebookId: profile.id }, (err, user) => {
+        if (err) {
+          return done(err, false);
+        }
+        if (!err && user) {
+          return done(null, user);
+        } else {
+          user = new User({ username: profile.displayName });
+          user.facebookId = profile.id;
+          user.firstname = profile.name.givenName;
+          user.lastname = profile.name.familyName;
+          user.save((err, user) => {
+            if (err) {
+              return done(err, false);
+            } else {
+              return done(null, user);
+            }
+          });
+        }
+      });
+    }
+  )
 );
 
 // we'll export verifyUser which we'll use to verify that an incoming request is from an
